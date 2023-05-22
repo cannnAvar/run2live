@@ -8,14 +8,27 @@ typedef u16 COLOR;
 
 #define INLINE static inline
 
+// --- Buttons ---
+#define KEY_STATE      (*(volatile u16*)0x4000130) 
+#define KEY_A          !(KEY_STATE &   1)
+#define KEY_B          !(KEY_STATE &   2)
+#define KEY_SL         !(KEY_STATE &   4)
+#define KEY_ST         !(KEY_STATE &   8)
+#define KEY_R          !(KEY_STATE &  16)
+#define KEY_L          !(KEY_STATE &  32)
+#define KEY_U          !(KEY_STATE &  64)
+#define KEY_D          !(KEY_STATE & 128)
+#define KEY_RS         !(KEY_STATE & 256)
+#define KEY_LS         !(KEY_STATE & 512)
+
 // === (from tonc_memmap.h) ===========================================
 
 #define MEM_IO      0x04000000
 #define MEM_VRAM    0x06000000
 
 #define REG_DISPCNT     *((volatile u32*)(MEM_IO+0x0000))
-
-#define REG_VCOUNT  *(u16*)0x04000006 
+typedef volatile u16 vu16;
+#define REG_VCOUNT  *(vu16*)0x04000006 
 
 // === (from tonc_memdef.h) ===========================================
 
@@ -36,22 +49,20 @@ typedef u16 COLOR;
 
 // === (from tonc_video.h) ============================================
 
-#define SCREEN_WIDTH   240
-#define SCREEN_HEIGHT  160
+#define SW  240
+#define SH  160
 
 #define vid_mem     ((u16*)MEM_VRAM)
 
 INLINE void m3_plot(int x, int y, COLOR clr)
-{   vid_mem[y*SCREEN_WIDTH+x]= clr;    }
+{   vid_mem[y*SW+x]= clr;    }
 
-#define CLR_BLACK   0x0000
-#define CLR_RED     0x001F
-#define CLR_LIME    0x03E0
-#define CLR_YELLOW  0x03FF
-#define CLR_BLUE    0x7C00
-#define CLR_MAG     0x7C1F
-#define CLR_CYAN    0x7FE0
-#define CLR_WHITE   0x7FFF
+
+INLINE void vid_vsync()
+{
+    while(REG_VCOUNT >= 160){}   // wait till VDraw
+    while(REG_VCOUNT < 160){}  // wait till VBlank
+}
 
 
 INLINE COLOR RGB15(u32 red, u32 green, u32 blue)
